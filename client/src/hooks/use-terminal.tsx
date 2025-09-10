@@ -265,7 +265,6 @@ meaningful software for hunans. I love to learn and implement ideas into code.
 │   • Google Developer Groups on Campus (October 2024 - Present)
 │   • Working towards building a community interested in tech. 
 │   • Learnt about OSS initiatives by Google.
-│   • 
 │   
 │   📚 Team Member
 │   • AlgoBharat Blockchain Club (October 2024 - Present)
