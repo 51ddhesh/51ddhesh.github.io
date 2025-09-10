@@ -105,14 +105,15 @@ Type any command to get started!`
 <span class="text-terminal-accent">Name:</span> Siddhesh Badnapurkar
 <span class="text-terminal-accent">I am a:</span> Computer Science Major | Low Level Systems Enthusiast
 
-<span class="text-terminal-accent">Bio:</span>
-Passionate CS student with a love for algorithms, low level systems and building 
+<span class="text-terminal-accent">About Me:</span>
+I am an undergrad with a love for algorithms, low level systems and building 
 meaningful software for hunans. I love to learn and implement ideas into code.
 
-<span class="text-terminal-accent">Currently:</span>
-• I am into competitive programming
-• I am learning the web  
-• I am implementing deep learning papers
+<span class="text-terminal-accent">Currently, I am:</span>
+• into competitive programming
+• learning the web  
+• implementing deep learning papers
+• into GPU kernel programming
 `
     },
 
@@ -149,9 +150,7 @@ meaningful software for hunans. I love to learn and implement ideas into code.
 │   • PostgreSQL
 │   • Vim/Neovim
 │   • Jupyter
-│   • Docker
 │   • MongoDB
-│   • AWS
 │
 └──────────────────────────────────────────────────────────`
     },
@@ -231,19 +230,20 @@ meaningful software for hunans. I love to learn and implement ideas into code.
 │   • Deep Learning Architecture
 │   • Web Technologies
 │   • CUDA (Compute Unified Device Architecture)
-│   • Docker
-│
-│   🔧 Future:
-│   • Reinforcement Learning
-│   • FPGA
-│   • Nextjs
-│   • On-chain applications on Solana with Rust
-│   • Mobile Development with React Native
+│   • Triton
 │
 │   📖 Currently Reading:
 │   • "Comprehensive Rust" by Android Team at Google
 │   • "Building Neural Networks from Scratch" by Harrison Kinsley and Daniel Kukiela
 │   • "Just the Mathematics" by AJ Hobson
+│
+│
+│ 🎓 What I will study next:
+│   • Reinforcement Learning
+│   • FPGA
+│   • Nextjs
+│   • On-chain applications on Solana with Rust
+│   • Mobile Development with React Native
 │
 └──────────────────────────────────────────────────────────`
     },
@@ -258,19 +258,19 @@ meaningful software for hunans. I love to learn and implement ideas into code.
 │
 │   👨‍💼 Technical Team Member
 │   • Competitive Coding Club (March 2025 - Present)
-│   • Organizing post contest discussions
-│   • Mentoring junior students in programming
+│   • Organizing post contest discussions.
+│   • Mentoring students in competitive programming.
 │
 │   📚 Machine Learning Coordinator
 │   • Google Developer Groups on Campus (October 2024 - Present)
-│   • Supporting 80+ students with coursework
-│   • Conducting lab sessions and office hours
-│   • Grading assignments and providing feedback
+│   • Working towards building a community interested in tech. 
+│   • Learnt about OSS initiatives by Google.
+│   • 
 │   
 │   📚 Team Member
 │   • AlgoBharat Blockchain Club (October 2024 - Present)
-│   • Learning to build on-chain applications with AlgoKit
-│   • Attending workshops and meetups organized by AlgoBharat
+│   • Learning to build on-chain applications with AlgoKit.
+│   • Attending workshops and meetups organized by AlgoBharat.
 │
 │ 📜 Previous Roles:
 │
