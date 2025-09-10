@@ -302,7 +302,7 @@ meaningful software for hunans. I love to learn and implement ideas into code.
 │   • Advanced algorithms 
 │   • C++, Rust, Go 
 │   • Deep learning 
-│   • HPGA
+│   • Concurrency
 │   • Low-level Systems Programming
 │
 └──────────────────────────────────────────────────────────`
