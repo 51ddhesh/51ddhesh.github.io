@@ -260,18 +260,19 @@ meaningful software for hunans. I love to learn and implement ideas into code.
 │   • Competitive Coding Club (March 2025 - Present)
 │   • Organizing post contest discussions.
 │   • Mentoring students in competitive programming.
+│ 
+│ 📜 Previous Roles:
 │
 │   📚 Machine Learning Coordinator
-│   • Google Developer Groups on Campus (October 2024 - Present)
+│   • Google Developer Groups on Campus (October 2024 - September 2025)
 │   • Working towards building a community interested in tech. 
 │   • Learnt about OSS initiatives by Google.
 │   
 │   📚 Team Member
-│   • AlgoBharat Blockchain Club (October 2024 - Present)
+│   • AlgoBharat Blockchain Club (October 2024 - September 2025)
 │   • Learning to build on-chain applications with AlgoKit.
 │   • Attending workshops and meetups organized by AlgoBharat.
 │
-│ 📜 Previous Roles:
 │
 │   🏆 Content Writer (August 2024 - February 2025)
 │   • Association of Computer Science and Business Systems
