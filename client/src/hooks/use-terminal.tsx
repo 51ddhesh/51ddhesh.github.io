@@ -341,13 +341,13 @@ meaningful software for hunans. I love to learn and implement ideas into code.
       name: 'resume',
       description: 'Download resume',
       execute: () => {
-        window.open('https://drive.google.com/file/d/1r-vGZ6XOPZElAXU0Kn0SERAvaFykAbGc/view?usp=sharing', '_blank');
+        window.open('https://drive.google.com/file/d/1XD3z6CfIYE8MUuYPhGyHhycxpAGsykfM/view?usp=sharing', '_blank');
         return `
 <span class="text-terminal-accent">📄 Downloading resume...</span>
 
 <span class="text-terminal-text">File:</span> Resume.pdf
 <span class="text-terminal-text">Size:</span> 119KB
-<span class="text-terminal-text">Last Updated:</span> September 2025
+<span class="text-terminal-text">Last Updated:</span> October 2025
 
 <span class="text-green-400">[████████████████████████████████] 100%</span>
 
