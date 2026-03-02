@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}#{{ term.name }} - {{ config.title }}{% endblock title %}
+
+{% block content %}
+  <h2 class="section-label">#{{ term.name }}</h2>
+  {% for post in term.pages %}
+    <a class="blog-post-link" href="{{ post.permalink }}" style="text-decoration:none;">
+      <span class="blog-post-title" style="font-size:13px; color:var(--text);">{{ post.title }}</span>
+      <span style="font-size:11px; color:var(--muted); white-space:nowrap;">{{ post.date | date(format="%b %Y") }}</span>
+    </a>
+  {% endfor %}
+{% endblock content %}

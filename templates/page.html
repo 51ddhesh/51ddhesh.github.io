@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.title }} - {{ config.title }}{% endblock title %}
+{% block description %}{% if page.description %}{{ page.description }}{% else %}{{ config.description }}{% endif %}{% endblock description %}
+
+{% block extra_css %}
+<style>
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    width: 0%;
+    z-index: 200;
+    transition: width 0.1s linear;
+  }
+
+  .post-header { margin-bottom: 48px; }
+
+  .post-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--heading);
+    letter-spacing: -0.02em;
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+
+  .post-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .post-header-meta .sep { color: var(--border); }
+
+  .post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid rgba(124, 154, 184, 0.18);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+
+  .post-divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 40px;
+  }
+
+  .post-body { max-width: 680px; }
+
+  .post-body p {
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 20px;
+    line-height: 1.85;
+  }
+
+  .post-body h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--heading);
+    margin: 40px 0 16px;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .post-body h2::before { content: '//'; color: var(--accent); font-size: 12px; }
+
+  .post-body h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--heading);
+    margin: 28px 0 12px;
+  }
+
+  .post-body h3::before { content: '> '; color: var(--muted); }
+
+  .post-body a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(124, 154, 184, 0.3);
+    transition: border-color 0.2s;
+  }
+
+  .post-body a:hover { border-color: var(--accent); }
+
+  .post-body strong { color: var(--heading); font-weight: 500; }
+
+  .post-body ul, .post-body ol {
+    padding-left: 0;
+    margin-bottom: 20px;
+    list-style: none;
+  }
+
+  .post-body ul li, .post-body ol li {
+    font-size: 14px;
+    color: var(--text);
+    padding-left: 18px;
+    position: relative;
+    margin-bottom: 6px;
+  }
+
+  .post-body ul li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  .post-body ol { counter-reset: li; }
+  .post-body ol li::before {
+    counter-increment: li;
+    content: counter(li) '.';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 11px;
+  }
+
+  .post-body code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 2px;
+  }
+
+  .post-body pre {
+    background: var(--surface) !important;
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    border-radius: 2px;
+    padding: 20px;
+    overflow-x: auto;
+    margin-bottom: 24px;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .post-body pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text);
+    font-size: 12px;
+  }
+
+  .post-body blockquote {
+    border-left: 2px solid var(--accent);
+    margin: 24px 0;
+    padding: 12px 20px;
+    background: var(--surface);
+  }
+
+  .post-body blockquote p { margin: 0; color: var(--muted); font-size: 13px; }
+
+  .post-body hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  .post-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .post-nav a {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    max-width: 48%;
+  }
+
+  .post-nav a:hover { color: var(--accent); }
+  .post-nav .next { text-align: right; margin-left: auto; }
+  .post-nav .prev::before { content: '← '; }
+  .post-nav .next::after  { content: ' →'; }
+
+  @media (max-width: 600px) {
+    .post-header h1 { font-size: 18px; }
+    .post-nav a { max-width: 100%; }
+  }
+</style>
+{% endblock extra_css %}
+{% block content %}
+  <div class="progress-bar" id="progress"></div>
+
+  <article>
+    <header class="post-header">
+      <h1>{{ page.title }}</h1>
+      <div class="post-header-meta">
+        <span>{{ page.date | date(format="%d %b %Y") }}</span>
+        {% if page.reading_time %}
+          <span class="sep">·</span>
+          <span>{{ page.reading_time }} min read</span>
+        {% endif %}
+      </div>
+      {% if page.taxonomies.tags %}
+        <div class="post-tags">
+          {% for tag in page.taxonomies.tags %}
+            <span class="tag">{{ tag }}</span>
+          {% endfor %}
+        </div>
+      {% endif %}
+    </header>
+
+    <div class="post-divider"></div>
+
+    <div class="post-body">
+      {{ page.content | safe }}
+    </div>
+  </article>
+
+  <nav class="post-nav">
+    {% if page.lower %}
+      <a class="prev" href="{{ page.lower.permalink }}">{{ page.lower.title }}</a>
+    {% endif %}
+    {% if page.higher %}
+      <a class="next" href="{{ page.higher.permalink }}">{{ page.higher.title }}</a>
+    {% endif %}
+  </nav>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+  const bar = document.getElementById('progress');
+  window.addEventListener('scroll', () => {
+    const doc = document.documentElement;
+    const scrolled = doc.scrollTop;
+    const total = doc.scrollHeight - doc.clientHeight;
+    bar.style.width = (scrolled / total * 100) + '%';
+  });
+</script>
+{% endblock extra_js %}

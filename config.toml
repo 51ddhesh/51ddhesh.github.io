@@ -1,0 +1,15 @@
+base_url = "https://51ddhesh.github.io"
+title = "Siddhesh Badnapurkar"
+description = "Writing on systems, algorithms, and machine learning."
+compile_sass = false
+generate_feeds = true
+feed_filenames = ["atom.xml"]
+
+[[taxonomies]]
+name = "tags"
+
+[markdown]
+highlighting.theme = "nord"
+
+[extra]
+author = "Siddhesh Badnapurkar"

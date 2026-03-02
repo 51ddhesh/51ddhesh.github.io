@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Blog - {{ config.title }}{% endblock title %}
+{% block description %}{{ config.description }}{% endblock description %}
+
+{% block extra_css %}
+<style>
+  .post-item {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .post-item:first-of-type { border-top: 1px solid var(--border); }
+
+  .post-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--heading);
+    transition: color 0.2s;
+  }
+
+  .post-item:hover .post-title { color: var(--accent); }
+
+  .post-meta {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .post-desc {
+    font-size: 12px;
+    color: var(--text);
+    margin-top: 4px;
+  }
+
+  .post-left { min-width: 0; }
+
+  .post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .tag {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid rgba(124, 154, 184, 0.18);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+
+  .empty {
+    font-size: 13px;
+    color: var(--muted);
+    padding: 18px 0;
+    border-top: 1px solid var(--border);
+  }
+
+</style>
+  {% endblock extra_css %}
+
+{% block content %}
+  <h2 class="section-label">blog</h2>
+
+  {% set blog_section = get_section(path="blog/_index.md") %}
+  {% if blog_section.pages %}
+    {% for post in blog_section.pages %}
+      <a class="post-item" href="{{ post.permalink }}">
+        <div class="post-left">
+          <div class="post-title">{{ post.title }}</div>
+          {% if post.description %}
+            <div class="post-desc">{{ post.description }}</div>
+          {% endif %}
+          {% if post.taxonomies.tags %}
+            <div class="post-tags">
+              {% for tag in post.taxonomies.tags %}
+                <span class="tag">{{ tag }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+        <div class="post-meta">{{ post.date | date(format="%b %Y") }}</div>
+      </a>
+    {% endfor %}
+  {% else %}
+    <p class="empty">No posts yet. Coming soon<span class="cursor"></span></p>
+  {% endif %}
+{% endblock content %}
