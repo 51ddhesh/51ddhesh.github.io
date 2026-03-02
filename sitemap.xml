@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://51ddhesh.github.io/</loc>
+    </url>
+    <url>
+        <loc>https://51ddhesh.github.io/blog/</loc>
+    </url>
+    <url>
+        <loc>https://51ddhesh.github.io/blog/writing-a-c-compiler-in-rust/</loc>
+        <lastmod>2025-03-01</lastmod>
+    </url>
+    <url>
+        <loc>https://51ddhesh.github.io/tags/</loc>
+    </url>
+    <url>
+        <loc>https://51ddhesh.github.io/tags/compilers/</loc>
+    </url>
+    <url>
+        <loc>https://51ddhesh.github.io/tags/rust/</loc>
+    </url>
+    <url>
+        <loc>https://51ddhesh.github.io/tags/systems/</loc>
+    </url>
+</urlset>

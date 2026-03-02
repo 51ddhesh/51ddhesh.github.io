@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+    <title>Siddhesh Badnapurkar</title>
+    <subtitle>Writing on systems, algorithms, and machine learning.</subtitle>
+    <link rel="self" type="application/atom+xml" href="https://51ddhesh.github.io/atom.xml"/>
+    <link rel="alternate" type="text/html" href="https://51ddhesh.github.io"/>
+    <generator uri="https://www.getzola.org/">Zola</generator>
+    <updated>2025-03-01T00:00:00+00:00</updated>
+    <id>https://51ddhesh.github.io/atom.xml</id>
+    <entry xml:lang="en">
+        <title>Writing a C Compiler in Rust: Where to Start</title>
+        <published>2025-03-01T00:00:00+00:00</published>
+        <updated>2025-03-01T00:00:00+00:00</updated>
+        
+        <author>
+          <name>
+            
+              Unknown
+            
+          </name>
+        </author>
+        
+        <link rel="alternate" type="text/html" href="https://51ddhesh.github.io/blog/writing-a-c-compiler-in-rust/"/>
+        <id>https://51ddhesh.github.io/blog/writing-a-c-compiler-in-rust/</id>
+        
+        <content type="html" xml:base="https://51ddhesh.github.io/blog/writing-a-c-compiler-in-rust/">&lt;p&gt;This is a sample post.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;why-build-a-compiler&quot;&gt;Why build a compiler?&lt;&#x2F;h2&gt;
+&lt;p&gt;Compilers are one of those projects that sound intimidating until you actually start. The moment you write a lexer that tokenises your first &lt;code&gt;int main()&lt;&#x2F;code&gt;, something clicks. You stop treating the language as magic and start seeing it as a sequence of well-defined transformations.&lt;&#x2F;p&gt;
+&lt;p&gt;That&#x27;s what drove me to build &lt;code&gt;min_cc&lt;&#x2F;code&gt; - not to replace &lt;code&gt;gcc&lt;&#x2F;code&gt;, but to understand the pipeline end to end.&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;the-pipeline&quot;&gt;The pipeline&lt;&#x2F;h2&gt;
+&lt;p&gt;A C compiler, stripped to its bones, does four things:&lt;&#x2F;p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;Lexing&lt;&#x2F;strong&gt; - turn raw source text into a stream of tokens&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Parsing&lt;&#x2F;strong&gt; - turn tokens into an Abstract Syntax Tree (AST)&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Semantic analysis&lt;&#x2F;strong&gt; - typecheck, resolve names, catch errors&lt;&#x2F;li&gt;
+&lt;li&gt;&lt;strong&gt;Code generation&lt;&#x2F;strong&gt; - walk the AST and emit assembly or IR&lt;&#x2F;li&gt;
+&lt;&#x2F;ul&gt;
+&lt;pre class=&quot;giallo&quot; style=&quot;color: #D8DEE9; background-color: #2E3440;&quot;&gt;&lt;code data-lang=&quot;rust&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #5E81AC;&quot;&gt;#[derive(&lt;&#x2F;span&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;Debug&lt;&#x2F;span&gt;&lt;span style=&quot;color: #5E81AC;&quot;&gt;,&lt;&#x2F;span&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt; Clone&lt;&#x2F;span&gt;&lt;span style=&quot;color: #5E81AC;&quot;&gt;,&lt;&#x2F;span&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt; PartialEq&lt;&#x2F;span&gt;&lt;span style=&quot;color: #5E81AC;&quot;&gt;)]&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #81A1C1;&quot;&gt;pub enum&lt;&#x2F;span&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt; Token&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt; {&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;    Int&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;    Return&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #88C0D0;&quot;&gt;    Ident&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;(&lt;&#x2F;span&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;String&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;),&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #88C0D0;&quot;&gt;    Number&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;(&lt;&#x2F;span&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;i64&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;),&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;    Plus&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;    Minus&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;    Star&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;    Slash&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;    LParen&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;    RParen&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;    LBrace&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;    RBrace&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #8FBCBB;&quot;&gt;    Semicolon&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;,&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
+&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;}&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;&lt;h2 id=&quot;what-i-learned&quot;&gt;What I learned&lt;&#x2F;h2&gt;
+&lt;p&gt;Parsing is deceptively hard. Operator precedence alone took me two rewrites. The Pratt parser technique - associating parsing functions with token types by precedence - finally made it click.&lt;&#x2F;p&gt;
+&lt;hr &#x2F;&gt;
+&lt;p&gt;&lt;em&gt;More to come as the project develops.&lt;&#x2F;em&gt;&lt;&#x2F;p&gt;
+</content>
+        
+    </entry>
+</feed>
