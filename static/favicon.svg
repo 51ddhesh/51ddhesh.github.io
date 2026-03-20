@@ -1,0 +1,21 @@
+<!-- Save as static/favicon.svg -->
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <!-- 1. Pure Sharp Square -->
+  <rect width="64" height="64" fill="#0d0d0d"/>
+  
+  <!-- 2. The Fire Asterisk (*) -->
+  <!-- Shifted slightly left and down to anchor the design -->
+  <text x="4" y="50" 
+        font-family="Impact, sans-serif" 
+        font-size="45" 
+        fill="#ff3300">*</text>
+  
+  <!-- 3. The Steel 51 -->
+  <!-- Placed at x=22 to overlap the invisible space of the asterisk -->
+  <text x="22" y="48" 
+        font-family="Impact, sans-serif" 
+        font-weight="1" 
+        font-size="35" 
+        fill="#396d96" 
+        letter-spacing="2">51</text>
+</svg>
