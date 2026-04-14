@@ -7,19 +7,25 @@
         <loc>https://51ddhesh.github.io/blog/</loc>
     </url>
     <url>
-        <loc>https://51ddhesh.github.io/blog/writing-a-c-compiler-in-rust/</loc>
-        <lastmod>2025-03-01</lastmod>
+        <loc>https://51ddhesh.github.io/blog/get-the-cat-out-of-the-heap/</loc>
+        <lastmod>2026-04-15</lastmod>
     </url>
     <url>
         <loc>https://51ddhesh.github.io/tags/</loc>
     </url>
     <url>
-        <loc>https://51ddhesh.github.io/tags/compilers/</loc>
+        <loc>https://51ddhesh.github.io/tags/c/</loc>
     </url>
     <url>
-        <loc>https://51ddhesh.github.io/tags/rust/</loc>
+        <loc>https://51ddhesh.github.io/tags/high-performance/</loc>
     </url>
     <url>
-        <loc>https://51ddhesh.github.io/tags/systems/</loc>
+        <loc>https://51ddhesh.github.io/tags/low-latency/</loc>
+    </url>
+    <url>
+        <loc>https://51ddhesh.github.io/tags/simd/</loc>
+    </url>
+    <url>
+        <loc>https://51ddhesh.github.io/tags/vectorization/</loc>
     </url>
 </urlset>

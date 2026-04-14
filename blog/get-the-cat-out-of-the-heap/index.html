@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/svg+xml" href="https://51ddhesh.github.io/favicon.svg">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting the Cat Out of the Heap - Siddhesh Badnapurkar</title>
+  <meta name="description" content="A walkthrough of optimizing C++ code from naive methods to hitting kernel bypass">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <link rel="alternate" type="application/atom+xml" title="Siddhesh Badnapurkar" href="https://51ddhesh.github.io/atom.xml">
+  
+  <style>
+    :root {
+      --bg:         #0d0d0d;
+      --surface:    #141414;
+      --border:     #1e1e1e;
+      --muted:      #555;
+      --text:       #c8c8c8;
+      --heading:    #f0f0f0;
+      --accent:     #7c9ab8;
+      --accent-dim: rgba(124, 154, 184, 0.12);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    pre::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    pre::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    pre::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    pre::-webkit-scrollbar-thumb:hover {
+      background: var(--muted);
+    }
+
+    pre {
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.8;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .wrap {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 80px 24px 120px;
+    }
+
+    .site-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 72px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .site-nav .home-link {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--heading);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    .site-nav .home-link:hover { color: var(--accent); }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .nav-links a {
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover,
+    .nav-links a.active { color: var(--accent); }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-label::before { content: '//'; color: var(--accent); }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .site-footer {
+      font-size: 11px;
+      color: var(--muted);
+      padding-top: 40px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 80px;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: var(--accent);
+      margin-left: 2px;
+      vertical-align: middle;
+      animation: blink 1.1s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+  </style>
+    
+<style>
+
+  .post-body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 24px;
+  }
+
+  .post-body th {
+    color: var(--heading);
+    font-weight: 500;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--accent);
+    text-align: left;
+  }
+
+  .post-body td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .post-body tr:last-child td {
+    border-bottom: none;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    width: 0%;
+    z-index: 200;
+    transition: width 0.1s linear;
+  }
+
+  .post-header { margin-bottom: 48px; }
+
+  .post-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--heading);
+    letter-spacing: -0.02em;
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+
+  .post-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  .post-header-meta .sep { color: var(--border); }
+
+  .post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tag {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid rgba(124, 154, 184, 0.18);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+
+  .post-divider {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 40px;
+  }
+
+  .post-body { max-width: 680px; }
+
+  .post-body p {
+    font-size: 14px;
+    color: var(--text);
+    margin-bottom: 20px;
+    line-height: 1.85;
+  }
+
+  .post-body h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--heading);
+    margin: 40px 0 16px;
+    letter-spacing: 0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .post-body h2::before { content: '//'; color: var(--accent); font-size: 12px; }
+
+  .post-body h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--heading);
+    margin: 28px 0 12px;
+  }
+
+  .post-body h3::before { content: '> '; color: var(--muted); }
+
+  .post-body a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(124, 154, 184, 0.3);
+    transition: border-color 0.2s;
+  }
+
+  .post-body a:hover { border-color: var(--accent); }
+
+  .post-body strong { color: var(--heading); font-weight: 500; }
+
+  .post-body ul, .post-body ol {
+    padding-left: 0;
+    margin-bottom: 20px;
+    list-style: none;
+  }
+
+  .post-body ul li, .post-body ol li {
+    font-size: 14px;
+    color: var(--text);
+    padding-left: 18px;
+    position: relative;
+    margin-bottom: 6px;
+  }
+
+  .post-body ul li::before {
+    content: '›';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  .post-body ol { counter-reset: li; }
+  .post-body ol li::before {
+    counter-increment: li;
+    content: counter(li) '.';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 11px;
+  }
+
+  .post-body code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1px 6px;
+    border-radius: 2px;
+  }
+
+  .post-body pre {
+    background: var(--surface) !important;
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    border-radius: 2px;
+    padding: 20px;
+    overflow-x: auto;
+    margin-bottom: 24px;
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .post-body pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text);
+    font-size: 12px;
+  }
+
+  .post-body blockquote {
+    border-left: 2px solid var(--accent);
+    margin: 24px 0;
+    padding: 12px 20px;
+    background: var(--surface);
+  }
+
+  .post-body blockquote p { margin: 0; color: var(--muted); font-size: 13px; }
+
+  .post-body hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 40px 0;
+  }
+
+  .post-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .post-nav a {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+    max-width: 48%;
+  }
+
+  .post-nav a:hover { color: var(--accent); }
+  .post-nav .next { text-align: right; margin-left: auto; }
+  .post-nav .prev::before { content: '← '; }
+  .post-nav .next::after  { content: ' →'; }
+
+  @media (max-width: 600px) {
+    .post-header h1 { font-size: 18px; }
+    .post-nav a { max-width: 100%; }
+  }
+</style>
+
+</head>
+<body>
+  <div class="wrap">
+    <nav class="site-nav">
+      <a href="https:&#x2F;&#x2F;51ddhesh.github.io" class="home-link">Siddhesh Badnapurkar</a>
+        <div class="nav-links">
+          
+            <a href="https://51ddhesh.github.io/blog">← back</a>
+          
+        </div>
+    </nav>
+
+    
+  <div class="progress-bar" id="progress"></div>
+
+  <article>
+    <header class="post-header">
+      <h1>Getting the Cat Out of the Heap</h1>
+      <div class="post-header-meta">
+        <span>15 Apr 2026</span>
+        
+          <span class="sep">·</span>
+          <span>4 min read</span>
+        
+      </div>
+      
+        <div class="post-tags">
+          
+            <span class="tag">C++</span>
+          
+            <span class="tag">Low Latency</span>
+          
+            <span class="tag">High Performance</span>
+          
+            <span class="tag">SIMD</span>
+          
+            <span class="tag">Vectorization</span>
+          
+        </div>
+      
+    </header>
+
+    <div class="post-divider"></div>
+
+    <div class="post-body">
+      <p>In performance critical areas like high-frequency trading arenas, latency is the difference between making or losing capital.</p>
+<p>In this blog, we will be optimizing a text book parser from processing ~440M ticks per second to processing ~25B ticks per second.</p>
+<h2 id="version-0-the-naive-idiomatic-c-processor">Version 0: The Naive, Idiomatic C++ processor</h2>
+<p>A standard textbook feed handler consists of an order book having a generic Message` that is polymorphic. Hence, we create a base class, derive specific tick types and manage their lifetimes.</p>
+<pre class="giallo" style="color: #D8DEE9; background-color: #2E3440;"><code data-lang="cpp"><span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">pragma</span><span style="color: #8FBCBB;"> once</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">include</span><span style="color: #ECEFF4;"> &lt;</span><span style="color: #A3BE8C;">vector</span><span style="color: #ECEFF4;">&gt;</span></span>
+<span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">include</span><span style="color: #ECEFF4;"> &lt;</span><span style="color: #A3BE8C;">memory</span><span style="color: #ECEFF4;">&gt;</span></span>
+<span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">include</span><span style="color: #ECEFF4;"> &lt;</span><span style="color: #A3BE8C;">cstdint</span><span style="color: #ECEFF4;">&gt;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #616E88;">// Generic market processing interface</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">class</span><span style="color: #8FBCBB;"> MarketMessage</span><span style="color: #ECEFF4;"> {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">public</span><span style="color: #ECEFF4;">:</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    virtual</span><span style="color: #88C0D0;"> ~MarketMessage</span><span style="color: #ECEFF4;">()</span><span style="color: #81A1C1;"> = default;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    virtual void</span><span style="color: #88C0D0;"> process</span><span style="color: #ECEFF4;">()</span><span style="color: #81A1C1;"> =</span><span style="color: #B48EAD;"> 0</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #616E88;">// Specific implementation for adding an order</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">class</span><span style="color: #8FBCBB;"> AddOrderMessage</span><span style="color: #ECEFF4;"> :</span><span style="color: #81A1C1;"> public</span><span> MarketMessage</span><span style="color: #ECEFF4;"> {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    uint64_t</span><span> timestamp</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    uint64_t</span><span> order_id</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    uint32_t</span><span> price</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    uint32_t</span><span> quantity</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    char</span><span> side</span><span style="color: #81A1C1;">;</span><span style="color: #616E88;"> // Buy / Sell</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">public</span><span style="color: #ECEFF4;">:</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">    AddOrderMessage</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">uint64_t</span><span> ts</span><span style="color: #ECEFF4;">,</span><span style="color: #81A1C1;"> uint64_t</span><span> id</span><span style="color: #ECEFF4;">,</span><span style="color: #81A1C1;"> uint32_t</span><span> p</span><span style="color: #ECEFF4;">,</span><span style="color: #81A1C1;"> uint32_t</span><span> q</span><span style="color: #ECEFF4;">,</span><span style="color: #81A1C1;"> char</span><span> s</span><span style="color: #ECEFF4;">) :</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">        timestamp</span><span style="color: #ECEFF4;">(</span><span>ts</span><span style="color: #ECEFF4;">),</span><span style="color: #88C0D0;"> order_id</span><span style="color: #ECEFF4;">(</span><span>id</span><span style="color: #ECEFF4;">),</span><span style="color: #88C0D0;"> price</span><span style="color: #ECEFF4;">(</span><span>p</span><span style="color: #ECEFF4;">),</span><span style="color: #88C0D0;"> quantity</span><span style="color: #ECEFF4;">(</span><span>q</span><span style="color: #ECEFF4;">),</span><span style="color: #88C0D0;"> side</span><span style="color: #ECEFF4;">(</span><span>s</span><span style="color: #ECEFF4;">) {}</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    void</span><span style="color: #88C0D0;"> process</span><span style="color: #ECEFF4;">()</span><span style="color: #81A1C1;"> override</span><span style="color: #ECEFF4;"> {</span></span>
+<span class="giallo-l"><span style="color: #616E88;">        // Dummy state machine update logic</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">        asm volatile</span><span style="color: #ECEFF4;">(&quot;&quot; : : &quot;</span><span style="color: #A3BE8C;">g</span><span style="color: #ECEFF4;">&quot;(</span><span>price</span><span style="color: #ECEFF4;">)</span><span>, </span><span style="color: #ECEFF4;">&quot;</span><span style="color: #A3BE8C;">g</span><span style="color: #ECEFF4;">&quot;(</span><span>quantity</span><span style="color: #ECEFF4;">) : &quot;</span><span style="color: #A3BE8C;">memory</span><span style="color: #ECEFF4;">&quot;)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">    }</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">void</span><span style="color: #88C0D0;"> process_stream</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">const</span><span> std</span><span style="color: #ECEFF4;">::</span><span>vector</span><span style="color: #ECEFF4;">&lt;</span><span>std</span><span style="color: #ECEFF4;">::</span><span>shared_ptr</span><span style="color: #ECEFF4;">&lt;</span><span>MarketMessage</span><span style="color: #ECEFF4;">&gt;&gt;</span><span style="color: #81A1C1;">&amp;</span><span> stream</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    for</span><span style="color: #ECEFF4;"> (</span><span style="color: #81A1C1;">const auto&amp;</span><span> msg </span><span style="color: #ECEFF4;">:</span><span> stream</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span>        msg </span><span style="color: #ECEFF4;">-&gt;</span><span style="color: #88C0D0;"> process</span><span style="color: #ECEFF4;">()</span><span style="color: #81A1C1;">;</span><span style="color: #616E88;"> // Latency trap</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">    }</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span></span></code></pre>
+<p>Now, this code is clean, but it is fundamentally hostile to modern CPU architectures. The following Google Benchmark and <code>perf</code> result will show it.</p>
+<pre class="giallo" style="color: #D8DEE9; background-color: #2E3440;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #88C0D0;">--------------------------------------------------------------</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">Benchmark</span><span style="color: #A3BE8C;">         Time         CPU  Iterations UserCounters...</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">--------------------------------------------------------------</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">Naive/10K</span><span style="color: #B48EAD;">       8095</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">     8067</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">      64906</span><span style="color: #A3BE8C;"> items_per_second=1.23966G/s</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">Naive/100K</span><span style="color: #B48EAD;">     80437</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">    80079</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">       8692</span><span style="color: #A3BE8C;"> items_per_second=1.24877G/s</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">Naive/1M</span><span style="color: #B48EAD;">     2424241</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">  2413241</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">        290</span><span style="color: #A3BE8C;"> items_per_second=414.381M/s</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #88C0D0;"> Performance</span><span style="color: #A3BE8C;"> counter stats:</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #88C0D0;">       7,87,43,674</span><span style="color: #A3BE8C;">      cache-misses:u</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">    5,35,97,05,947</span><span style="color: #A3BE8C;">      cache-references:u</span></span></code></pre>
+<p>We are hitting a <strong>cache-cliff</strong>. The CPU is spending more time waiting for main memory and looking up vtable addresses than it does calculating anything.</p>
+<h2 id="version-1-data-oriented-design">Version 1: Data Oriented Design</h2>
+<p>To quote Martin Thompson, to achieve mechanical sympathy, we must stop thinking about 'Objects' and start thinking about 'Data'. The CPU prefetcher loves predictable, contiguous memory. We need to kill the heap allocations, remove the vtables and pack our data tightly aligning with the 64 byte L1 cache lines.</p>
+<pre class="giallo" style="color: #D8DEE9; background-color: #2E3440;"><code data-lang="cpp"><span class="giallo-l"><span style="color: #81A1C1;">enum class</span><span> MsgType</span><span style="color: #ECEFF4;"> :</span><span style="color: #81A1C1;"> uint8_t</span><span style="color: #ECEFF4;"> {</span></span>
+<span class="giallo-l"><span>    ADD</span><span style="color: #ECEFF4;">,</span></span>
+<span class="giallo-l"><span>    CANCEL</span><span style="color: #ECEFF4;">,</span></span>
+<span class="giallo-l"><span>    MODIFY</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #616E88;">// Flat contiguous POD struct</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">struct</span><span> MarketMessagePod</span><span style="color: #ECEFF4;"> {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    uint64_t</span><span> timestamp</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    uint64_t</span><span> order_id</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    uint32_t</span><span> price</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    uint32_t</span><span> quantity</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span>    MsgType type</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    char</span><span> side</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">void</span><span style="color: #88C0D0;"> process_stream</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">const</span><span> std</span><span style="color: #ECEFF4;">::</span><span>vector</span><span style="color: #ECEFF4;">&lt;</span><span>MarketMessagePod</span><span style="color: #ECEFF4;">&gt;</span><span style="color: #81A1C1;">&amp;</span><span> stream</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    for</span><span style="color: #ECEFF4;"> (</span><span style="color: #81A1C1;">const auto&amp;</span><span> msg </span><span style="color: #ECEFF4;">:</span><span> stream</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span style="color: #616E88;">        // Switch-case replaces virtual dispatch</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">        switch</span><span style="color: #ECEFF4;"> (</span><span>msg</span><span style="color: #ECEFF4;">.</span><span>type</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">            case</span><span> MsgType</span><span style="color: #ECEFF4;">::</span><span>ADD</span><span style="color: #ECEFF4;">:</span></span>
+<span class="giallo-l"><span style="color: #616E88;">                // Dummy state machine update</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">                asm volatile</span><span style="color: #ECEFF4;">(&quot;&quot; : : &quot;</span><span style="color: #A3BE8C;">g</span><span style="color: #ECEFF4;">&quot;(</span><span>msg</span><span style="color: #ECEFF4;">.</span><span>price</span><span style="color: #ECEFF4;">)</span><span>, </span><span style="color: #ECEFF4;">&quot;</span><span style="color: #A3BE8C;">g</span><span style="color: #ECEFF4;">&quot;(</span><span>msg</span><span style="color: #ECEFF4;">.</span><span>quantity</span><span style="color: #ECEFF4;">) : &quot;</span><span style="color: #A3BE8C;">memory</span><span style="color: #ECEFF4;">&quot;)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">                break;</span></span>
+<span class="giallo-l"><span style="color: #616E88;">            // ...</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">        }</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">    }</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span></span></code></pre>
+<p>By switching to an array of structs (AoS), the results are immediate:</p>
+<pre class="giallo" style="color: #D8DEE9; background-color: #2E3440;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #88C0D0;">------------------------------------------------------------</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">Benchmark</span><span style="color: #A3BE8C;">       Time         CPU  Iterations UserCounters...</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">------------------------------------------------------------</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">DoD/10K</span><span style="color: #B48EAD;">      2760</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">     2752</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">      253335</span><span style="color: #A3BE8C;"> items_per_second=3.63315G/s</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">DoD/100K</span><span style="color: #B48EAD;">    31076</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">    30974</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">       22501</span><span style="color: #A3BE8C;"> items_per_second=3.22853G/s</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">DoD/1M</span><span style="color: #B48EAD;">    1074340</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">  1068376</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">         650</span><span style="color: #A3BE8C;"> items_per_second=936M/s</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #88C0D0;"> Performance</span><span style="color: #A3BE8C;"> counter stats:</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #88C0D0;">       9,94,29,596</span><span style="color: #A3BE8C;">      cache-misses:u</span><span>                                                        </span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">    7,49,13,99,026</span><span style="color: #A3BE8C;">      cache-references:u</span><span>                                                    </span></span></code></pre>
+<p>We can now process double the ticks at ~936M per second. But, this increased the cache misses but also increased the number of cache references as well. We can find the percentage of cache misses as:
+$$
+\frac{cache\_misses}{cache\_references} \times 100 \%
+$$</p>
+<p>Using this formula, the cache-miss rate for the initial (version 1) approach is $1.46 \%$. For the new data oriented design, this rate becomes $1.327 \%$. Hence, the cache-miss rate decreases as well.</p>
+<h2 id="version-2-static-resolution-crtp-and-branch-hinting">Version 2: Static Resolution, CRTP and Branch Hinting</h2>
+<p>Now, the memory is aligned, but now we face a control-flow bottleneck. The <code>switch</code> statement introduces conditional branches, risking pipeline flushes. We need to use Curiously Recurring Template Pattern (CRTP) and compiler attributes to eliminate branching entirely. We inherit the <code>MarketMessagePod</code> from the V2 data oriented design.</p>
+<pre class="giallo" style="color: #D8DEE9; background-color: #2E3440;"><code data-lang="cpp"><span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">include</span><span style="color: #ECEFF4;"> &lt;</span><span style="color: #A3BE8C;">data_oriented.hpp</span><span style="color: #ECEFF4;">&gt;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">template</span><span style="color: #ECEFF4;"> &lt;</span><span style="color: #81A1C1;">typename</span><span> Derived</span><span style="color: #ECEFF4;">&gt;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">class</span><span style="color: #8FBCBB;"> MessageHandler</span><span style="color: #ECEFF4;"> {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">public</span><span style="color: #ECEFF4;">:</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    inline void</span><span style="color: #88C0D0;"> handle</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">const</span><span> MarketMessagePod</span><span style="color: #81A1C1;">&amp;</span><span> msg</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">        static_cast&lt;</span><span>Derived</span><span style="color: #81A1C1;">*&gt;</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">this</span><span style="color: #ECEFF4;">) -&gt;</span><span style="color: #88C0D0;"> process_impl</span><span style="color: #ECEFF4;">(</span><span>msg</span><span style="color: #ECEFF4;">)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">    }</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">class</span><span style="color: #8FBCBB;"> FastOrderBook</span><span style="color: #ECEFF4;"> :</span><span style="color: #81A1C1;"> public</span><span> MessageHandler</span><span style="color: #ECEFF4;">&lt;</span><span>FastOrderBook</span><span style="color: #ECEFF4;">&gt; {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">public</span><span style="color: #ECEFF4;">:</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    inline void</span><span style="color: #88C0D0;"> process_impl</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">const</span><span> MarketMessagePod</span><span style="color: #81A1C1;">&amp;</span><span> msg</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">        if</span><span style="color: #ECEFF4;"> (</span><span>msg</span><span style="color: #ECEFF4;">.</span><span>type</span><span style="color: #81A1C1;"> ==</span><span> MsgType</span><span style="color: #ECEFF4;">::</span><span>ADD</span><span style="color: #ECEFF4;">) [[</span><span>likely</span><span style="color: #ECEFF4;">]] {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">            asm volatile</span><span style="color: #ECEFF4;">(&quot;&quot; : : &quot;</span><span style="color: #A3BE8C;">g</span><span style="color: #ECEFF4;">&quot;(</span><span>msg</span><span style="color: #ECEFF4;">.</span><span>price</span><span style="color: #ECEFF4;">)</span><span>, </span><span style="color: #ECEFF4;">&quot;</span><span style="color: #A3BE8C;">g</span><span style="color: #ECEFF4;">&quot;(</span><span>msg</span><span style="color: #ECEFF4;">.</span><span>quantity</span><span style="color: #ECEFF4;">) : &quot;</span><span style="color: #A3BE8C;">memory</span><span style="color: #ECEFF4;">&quot;)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">        }</span><span> </span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">        else</span><span style="color: #ECEFF4;"> [[</span><span>unlikely</span><span style="color: #ECEFF4;">]] {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">            asm volatile</span><span style="color: #ECEFF4;">(&quot;&quot; : : &quot;</span><span style="color: #A3BE8C;">g</span><span style="color: #ECEFF4;">&quot;(</span><span>msg</span><span style="color: #ECEFF4;">.</span><span>order_id</span><span style="color: #ECEFF4;">) : &quot;</span><span style="color: #A3BE8C;">memory</span><span style="color: #ECEFF4;">&quot;)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">        }</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">    }</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">void</span><span style="color: #88C0D0;"> process_stream</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">const</span><span> std</span><span style="color: #ECEFF4;">::</span><span>vector</span><span style="color: #ECEFF4;">&lt;</span><span>MarketMessagePod</span><span style="color: #ECEFF4;">&gt;</span><span style="color: #81A1C1;">&amp;</span><span> stream</span><span style="color: #ECEFF4;">,</span><span> FastOrderBook</span><span style="color: #81A1C1;">&amp;</span><span> book</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    const size_t</span><span> size </span><span style="color: #81A1C1;">=</span><span> stream</span><span style="color: #ECEFF4;">.</span><span style="color: #88C0D0;">size</span><span style="color: #ECEFF4;">()</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    const</span><span> MarketMessagePod</span><span style="color: #81A1C1;">*</span><span> __restrict__ data </span><span style="color: #81A1C1;">=</span><span> stream</span><span style="color: #ECEFF4;">.</span><span style="color: #88C0D0;">data</span><span style="color: #ECEFF4;">()</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">    #</span><span style="color: #81A1C1;">pragma</span><span style="color: #8FBCBB;"> GCC unroll</span><span style="color: #5E81AC;"> 4</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    for</span><span style="color: #ECEFF4;"> (</span><span style="color: #81A1C1;">size_t</span><span> i </span><span style="color: #81A1C1;">=</span><span style="color: #B48EAD;"> 0</span><span style="color: #81A1C1;">;</span><span> i </span><span style="color: #81A1C1;">&lt;</span><span> size</span><span style="color: #81A1C1;">;</span><span> i</span><span style="color: #81A1C1;">++</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span>        book</span><span style="color: #ECEFF4;">.</span><span style="color: #88C0D0;">handle</span><span style="color: #ECEFF4;">(</span><span>data</span><span style="color: #ECEFF4;">[</span><span>i</span><span style="color: #ECEFF4;">])</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">    }</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span></span></code></pre>
+<p>The throughput now jumps to 1.15 Billion per ticks.</p>
+<pre class="giallo" style="color: #D8DEE9; background-color: #2E3440;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #88C0D0;">------------------------------------------------------------------</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">Benchmark</span><span style="color: #A3BE8C;">             Time        CPU   Iterations UserCounters...</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">------------------------------------------------------------------</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">SR_CRTP_BH/10K</span><span style="color: #B48EAD;">     3206</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">    3198</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">       185542</span><span style="color: #A3BE8C;"> items_per_second=3.12661G/s</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">SR_CRTP_BH/100K</span><span style="color: #B48EAD;">   32419</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">   32318</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">        21525</span><span style="color: #A3BE8C;"> items_per_second=3.09423G/s</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">SR_CRTP_BH/1M</span><span style="color: #B48EAD;">    874833</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">  869572</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">          795</span><span style="color: #A3BE8C;"> items_per_second=1.14999G/s</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #88C0D0;"> Performance</span><span style="color: #A3BE8C;"> counter stats for:</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #88C0D0;">       8,59,02,211</span><span style="color: #A3BE8C;">      cache-misses:u</span><span>                                                        </span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">    6,40,36,81,500</span><span style="color: #A3BE8C;">      cache-references:u</span></span></code></pre><h2 id="version-3-silicon-symphony-simd-vectorization">Version 3: Silicon Symphony: SIMD Vectorization</h2>
+<p>Writing custom deep learning libraries teaches you very quickly that calculating token generation rates relies entirely on packing the CPU's wide registers. Processing scalar values is a waste of silicon. We can apply that exact same SIMD acceleration to our market data parser.</p>
+<p>To use AVX2 intrinsics, we must flip our architecture inside out to a Struct of Arrays (SoA) to provide the 256-bit registers with uniform data.</p>
+<pre class="giallo" style="color: #D8DEE9; background-color: #2E3440;"><code data-lang="cpp"><span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">include</span><span style="color: #ECEFF4;"> &lt;</span><span style="color: #A3BE8C;">immintrin.h</span><span style="color: #ECEFF4;">&gt;</span><span style="color: #616E88;"> // AVX/SSE Intrinsics</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">struct</span><span> MarketDataSoA</span><span style="color: #ECEFF4;"> {</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">    alignas</span><span style="color: #ECEFF4;">(</span><span>64</span><span style="color: #ECEFF4;">)</span><span> std</span><span style="color: #ECEFF4;">::</span><span>vector</span><span style="color: #81A1C1;">&lt;uint64_t&gt;</span><span> timestamps</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">    alignas</span><span style="color: #ECEFF4;">(</span><span>64</span><span style="color: #ECEFF4;">)</span><span> std</span><span style="color: #ECEFF4;">::</span><span>vector</span><span style="color: #81A1C1;">&lt;uint64_t&gt;</span><span> order_ids</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">    alignas</span><span style="color: #ECEFF4;">(</span><span>64</span><span style="color: #ECEFF4;">)</span><span> std</span><span style="color: #ECEFF4;">::</span><span>vector</span><span style="color: #81A1C1;">&lt;uint32_t&gt;</span><span> prices</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">    alignas</span><span style="color: #ECEFF4;">(</span><span>64</span><span style="color: #ECEFF4;">)</span><span> std</span><span style="color: #ECEFF4;">::</span><span>vector</span><span style="color: #81A1C1;">&lt;uint32_t&gt;</span><span> quantities</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">    alignas</span><span style="color: #ECEFF4;">(</span><span>64</span><span style="color: #ECEFF4;">)</span><span> std</span><span style="color: #ECEFF4;">::</span><span>vector</span><span style="color: #81A1C1;">&lt;uint8_t&gt;</span><span> types</span><span style="color: #81A1C1;">;</span><span> </span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    void</span><span style="color: #88C0D0;"> reserve</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">size_t</span><span> size</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span>        timestamps</span><span style="color: #ECEFF4;">.</span><span style="color: #88C0D0;">reserve</span><span style="color: #ECEFF4;">(</span><span>size</span><span style="color: #ECEFF4;">)</span><span style="color: #81A1C1;">;</span><span> order_ids</span><span style="color: #ECEFF4;">.</span><span style="color: #88C0D0;">reserve</span><span style="color: #ECEFF4;">(</span><span>size</span><span style="color: #ECEFF4;">)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span>        prices</span><span style="color: #ECEFF4;">.</span><span style="color: #88C0D0;">reserve</span><span style="color: #ECEFF4;">(</span><span>size</span><span style="color: #ECEFF4;">)</span><span style="color: #81A1C1;">;</span><span> quantities</span><span style="color: #ECEFF4;">.</span><span style="color: #88C0D0;">reserve</span><span style="color: #ECEFF4;">(</span><span>size</span><span style="color: #ECEFF4;">)</span><span style="color: #81A1C1;">;</span><span> types</span><span style="color: #ECEFF4;">.</span><span style="color: #88C0D0;">reserve</span><span style="color: #ECEFF4;">(</span><span>size</span><span style="color: #ECEFF4;">)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">    }</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">inline void</span><span style="color: #88C0D0;"> process_stream_simd</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">const</span><span> MarketDataSoA</span><span style="color: #81A1C1;">&amp;</span><span> book</span><span style="color: #ECEFF4;">,</span><span style="color: #81A1C1;"> size_t</span><span> size</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    const uint32_t*</span><span> __restrict__ qty_ptr </span><span style="color: #81A1C1;">=</span><span> book</span><span style="color: #ECEFF4;">.</span><span>quantities</span><span style="color: #ECEFF4;">.</span><span style="color: #88C0D0;">data</span><span style="color: #ECEFF4;">()</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    size_t</span><span> i </span><span style="color: #81A1C1;">=</span><span style="color: #B48EAD;"> 0</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span>    </span></span>
+<span class="giallo-l"><span>    __m256i vector_accumulator </span><span style="color: #81A1C1;">=</span><span style="color: #88C0D0;"> _mm256_setzero_si256</span><span style="color: #ECEFF4;">()</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    for</span><span style="color: #ECEFF4;"> (</span><span style="color: #81A1C1;">;</span><span> i </span><span style="color: #81A1C1;">+</span><span style="color: #B48EAD;"> 8</span><span style="color: #81A1C1;"> &lt;=</span><span> size</span><span style="color: #81A1C1;">;</span><span> i </span><span style="color: #81A1C1;">+=</span><span style="color: #B48EAD;"> 8</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span>        __m256i q_vec </span><span style="color: #81A1C1;">=</span><span style="color: #88C0D0;"> _mm256_loadu_si256</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">reinterpret_cast&lt;const</span><span> __m256i</span><span style="color: #81A1C1;">*&gt;</span><span style="color: #ECEFF4;">(</span><span>qty_ptr </span><span style="color: #81A1C1;">+</span><span> i</span><span style="color: #ECEFF4;">))</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span>        vector_accumulator </span><span style="color: #81A1C1;">=</span><span style="color: #88C0D0;"> _mm256_add_epi32</span><span style="color: #ECEFF4;">(</span><span>vector_accumulator</span><span style="color: #ECEFF4;">,</span><span> q_vec</span><span style="color: #ECEFF4;">)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">    }</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    for</span><span style="color: #ECEFF4;"> (</span><span style="color: #81A1C1;">;</span><span> i </span><span style="color: #81A1C1;">&lt;</span><span> size</span><span style="color: #81A1C1;">;</span><span> i</span><span style="color: #81A1C1;">++</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">        asm volatile</span><span style="color: #ECEFF4;">(&quot;&quot; : : &quot;</span><span style="color: #A3BE8C;">g</span><span style="color: #ECEFF4;">&quot;(</span><span>qty_ptr</span><span style="color: #ECEFF4;">[</span><span>i</span><span style="color: #ECEFF4;">]) : &quot;</span><span style="color: #A3BE8C;">memory</span><span style="color: #ECEFF4;">&quot;)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">    }</span></span>
+<span class="giallo-l"><span>    </span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    asm volatile</span><span style="color: #ECEFF4;">(&quot;&quot; : : &quot;</span><span style="color: #A3BE8C;">x</span><span style="color: #ECEFF4;">&quot;(</span><span>vector_accumulator</span><span style="color: #ECEFF4;">) : &quot;</span><span style="color: #A3BE8C;">memory</span><span style="color: #ECEFF4;">&quot;)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span></span></code></pre><pre class="giallo" style="color: #D8DEE9; background-color: #2E3440;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #88C0D0;">------------------------------------------------------------</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">Benchmark</span><span style="color: #A3BE8C;">       Time        CPU   Iterations UserCounters...</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">------------------------------------------------------------</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">SIMD/10K</span><span style="color: #B48EAD;">      298</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">     297</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">      2340635</span><span style="color: #A3BE8C;"> items_per_second=33.6261G/s</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">SIMD/100K</span><span style="color: #B48EAD;">    3374</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">    3364</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">       207721</span><span style="color: #A3BE8C;"> items_per_second=29.7253G/s</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">SIMD/1M</span><span style="color: #B48EAD;">     38100</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">   37976</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">        18422</span><span style="color: #A3BE8C;"> items_per_second=26.3322G/s</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #88C0D0;"> Performance</span><span style="color: #A3BE8C;"> counter stats for:</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #88C0D0;">      18,69,98,149</span><span style="color: #A3BE8C;">      cache-misses:u</span><span>                                                        </span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">    9,39,03,07,057</span><span style="color: #A3BE8C;">      cache-references:u</span></span></code></pre>
+<p><strong>26 Billion Ticks per second</strong>. That is a staggering 60x gain in performance. This is still not enough for low latency trading.</p>
+<h2 id="version-4-kernel-bypass">Version 4: Kernel Bypass</h2>
+<p>A single Linux scheduler tick takes about 3 to 5 microseconds. In that tiny window, our Version 3 SIMD loop could have processed over 100,000 messages. If the OS decides to pause our thread, we lose the trade.</p>
+<p>We must guarantee determinism by isolating our thread. A custom kernel supports tuning the bootloader parameters (<code>isolcpus=2 nohz_full=2 rcu_nocbs=2</code>) to completely evict the OS from a specific core.</p>
+<p>Then, we bind our execution strictly to that physical silicon:</p>
+<pre class="giallo" style="color: #D8DEE9; background-color: #2E3440;"><code data-lang="cpp"><span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">pragma</span><span style="color: #8FBCBB;"> once</span></span>
+<span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">include</span><span style="color: #ECEFF4;"> &lt;</span><span style="color: #A3BE8C;">pthread.h</span><span style="color: #ECEFF4;">&gt;</span></span>
+<span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">include</span><span style="color: #ECEFF4;"> &lt;</span><span style="color: #A3BE8C;">sched.h</span><span style="color: #ECEFF4;">&gt;</span></span>
+<span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">include</span><span style="color: #ECEFF4;"> &lt;</span><span style="color: #A3BE8C;">stdexcept</span><span style="color: #ECEFF4;">&gt;</span></span>
+<span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">include</span><span style="color: #ECEFF4;"> &lt;</span><span style="color: #A3BE8C;">iostream</span><span style="color: #ECEFF4;">&gt;</span></span>
+<span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">include</span><span style="color: #ECEFF4;"> &lt;</span><span style="color: #A3BE8C;">simd_vectorized.hpp</span><span style="color: #ECEFF4;">&gt;</span><span style="color: #616E88;"> // Reusing our peak SIMD logic</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #81A1C1;">class</span><span style="color: #8FBCBB;"> HardwareIsolator</span><span style="color: #ECEFF4;"> {</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">public</span><span style="color: #ECEFF4;">:</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">    static void</span><span style="color: #88C0D0;"> pin_thread_to_core</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">int</span><span> core_id</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span style="color: #8FBCBB;">        cpu_set_t</span><span> cpuset</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">        CPU_ZERO</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">&amp;</span><span>cpuset</span><span style="color: #ECEFF4;">)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">        CPU_SET</span><span style="color: #ECEFF4;">(</span><span>core_id</span><span style="color: #ECEFF4;">,</span><span style="color: #81A1C1;"> &amp;</span><span>cpuset</span><span style="color: #ECEFF4;">)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span>        </span></span>
+<span class="giallo-l"><span style="color: #8FBCBB;">        pthread_t</span><span> current_thread </span><span style="color: #81A1C1;">=</span><span style="color: #88C0D0;"> pthread_self</span><span style="color: #ECEFF4;">()</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">        if</span><span style="color: #ECEFF4;"> (</span><span style="color: #88C0D0;">pthread_setaffinity_np</span><span style="color: #ECEFF4;">(</span><span>current_thread</span><span style="color: #ECEFF4;">,</span><span style="color: #81A1C1;"> sizeof</span><span style="color: #ECEFF4;">(</span><span style="color: #8FBCBB;">cpu_set_t</span><span style="color: #ECEFF4;">),</span><span style="color: #81A1C1;"> &amp;</span><span>cpuset</span><span style="color: #ECEFF4;">)</span><span style="color: #81A1C1;"> !=</span><span style="color: #B48EAD;"> 0</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span>            std</span><span style="color: #ECEFF4;">::</span><span>cerr </span><span style="color: #81A1C1;">&lt;&lt;</span><span style="color: #ECEFF4;"> &quot;</span><span style="color: #A3BE8C;">WARNING: Failed to pin thread to core </span><span style="color: #ECEFF4;">&quot;</span><span style="color: #81A1C1;"> &lt;&lt;</span><span> core_id </span><span style="color: #81A1C1;">&lt;&lt;</span><span style="color: #ECEFF4;"> &quot;</span><span style="color: #EBCB8B;">\n</span><span style="color: #ECEFF4;">&quot;</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">        }</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">    }</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #616E88;">// The V4 processing function simply wraps V3 but ensures we are pinned</span></span>
+<span class="giallo-l"><span style="color: #81A1C1;">inline void</span><span style="color: #88C0D0;"> process_stream</span><span style="color: #ECEFF4;">(</span><span style="color: #81A1C1;">const</span><span> MarketDataSoA</span><span style="color: #81A1C1;">&amp;</span><span> book</span><span style="color: #ECEFF4;">,</span><span style="color: #81A1C1;"> size_t</span><span> size</span><span style="color: #ECEFF4;">,</span><span style="color: #81A1C1;"> int</span><span> target_core</span><span style="color: #ECEFF4;">) {</span></span>
+<span class="giallo-l"><span>    HardwareIsolator</span><span style="color: #ECEFF4;">::</span><span style="color: #88C0D0;">pin_thread_to_core</span><span style="color: #ECEFF4;">(</span><span>target_core</span><span style="color: #ECEFF4;">)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span>    </span></span>
+<span class="giallo-l"><span style="color: #616E88;">    // Execute the hyper-optimized SIMD loop</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">    process_stream_simd</span><span style="color: #ECEFF4;">(</span><span>book</span><span style="color: #ECEFF4;">,</span><span> size</span><span style="color: #ECEFF4;">)</span><span style="color: #81A1C1;">;</span></span>
+<span class="giallo-l"><span style="color: #ECEFF4;">}</span></span></code></pre>
+<p>Running the benchmark with FIFO real time priority (with <code>sudo chrt -f 99</code>), we get:</p>
+<pre class="giallo" style="color: #D8DEE9; background-color: #2E3440;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #88C0D0;">----------------------------------------------------------</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">Benchmark</span><span style="color: #A3BE8C;">       Time       CPU  Iterations UserCounters...</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">----------------------------------------------------------</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">Metal/10K</span><span style="color: #B48EAD;">    1222</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">   1219</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">      578139</span><span style="color: #A3BE8C;"> items_per_second=8.20443G/s</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">Metal/100K</span><span style="color: #B48EAD;">   4604</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">   4592</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">      142760</span><span style="color: #A3BE8C;"> items_per_second=21.7761G/s</span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">Metal/1M</span><span style="color: #B48EAD;">    39963</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">  39890</span><span style="color: #A3BE8C;"> ns</span><span style="color: #B48EAD;">       17527</span><span style="color: #A3BE8C;"> items_per_second=25.0692G/s</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #88C0D0;"> Performance</span><span style="color: #A3BE8C;"> counter stats for:</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span style="color: #88C0D0;">      12,87,16,735</span><span style="color: #A3BE8C;">      cache-misses:u</span><span>                                                        </span></span>
+<span class="giallo-l"><span style="color: #88C0D0;">    6,94,77,45,302</span><span style="color: #A3BE8C;">      cache-references:u</span></span></code></pre>
+<p>Bypassing the OS slightly decreased our peak throughput from ~26 G/s to ~25 G/s. This is because we have hit the physical limits of the silicon's memory bandwidth.</p>
+<p>But in low latency arenas, peak throughput is a vanity metric; jitter is the only metric that pays. We traded a tiny fraction of theoretical throughput for absolute, unwavering determinism.</p>
+<h2 id="the-numbers">The Numbers</h2>
+<table><thead><tr><th style="text-align: left">Method</th><th style="text-align: left">Cache Misses</th><th style="text-align: left">Cache References</th><th style="text-align: left">Throughput</th></tr></thead><tbody>
+<tr><td style="text-align: left">Naive</td><td style="text-align: left">78743674</td><td style="text-align: left">5359705947</td><td style="text-align: left">414.381M/s</td></tr>
+<tr><td style="text-align: left">Data Oriented Design</td><td style="text-align: left">99429596</td><td style="text-align: left">7491399026</td><td style="text-align: left">936M/s</td></tr>
+<tr><td style="text-align: left">Static Processing + CRTP</td><td style="text-align: left">85902211</td><td style="text-align: left">6403681500</td><td style="text-align: left">1.15G/s</td></tr>
+<tr><td style="text-align: left">SIMD Processing</td><td style="text-align: left">186998149</td><td style="text-align: left">9390307057</td><td style="text-align: left">26.3322G/s</td></tr>
+<tr><td style="text-align: left">Metal</td><td style="text-align: left">128716735</td><td style="text-align: left">6947745302</td><td style="text-align: left">25.0692G/s</td></tr>
+</tbody></table>
+<h2 id="end">End</h2>
+<p>The code files for this implementation are available <a rel="external" href="https://github.com/51ddhesh/latency-progression">here</a> and are free to use under <a rel="external" href="https://www.boost.org/LICENSE_1_0.txt">the Boost Software License 1.0</a>.</p>
+
+    </div>
+  </article>
+
+  <nav class="post-nav">
+    
+    
+  </nav>
+
+
+    <footer class="site-footer">
+      <span>Siddhesh Badnapurkar</span>
+      <span>EOF.</span>
+    </footer>
+  </div>
+
+  
+<script>
+  const bar = document.getElementById('progress');
+  window.addEventListener('scroll', () => {
+    const doc = document.documentElement;
+    const scrolled = doc.scrollTop;
+    const total = doc.scrollHeight - doc.clientHeight;
+    bar.style.width = (scrolled / total * 100) + '%';
+  });
+</script>
+
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+  <script>
+      document.addEventListener("DOMContentLoaded", function() {
+          renderMathInElement(document.body, {
+              delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+              ],
+              throwOnError : false
+          });
+      });
+  </script>
+</body>
+</html>
