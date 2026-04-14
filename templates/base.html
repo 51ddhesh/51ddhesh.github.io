@@ -28,6 +28,28 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
 
+    pre::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    pre::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    pre::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 2px;
+    }
+
+    pre::-webkit-scrollbar-thumb:hover {
+      background: var(--muted);
+    }
+
+    pre {
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
     body {
       font-family: 'JetBrains Mono', monospace;
       background: var(--bg);

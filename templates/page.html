@@ -5,6 +5,32 @@
 
 {% block extra_css %}
 <style>
+
+  .post-body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-bottom: 24px;
+  }
+
+  .post-body th {
+    color: var(--heading);
+    font-weight: 500;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--accent);
+    text-align: left;
+  }
+
+  .post-body td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .post-body tr:last-child td {
+    border-bottom: none;
+  }
+
   .progress-bar {
     position: fixed;
     top: 0;
