@@ -13,7 +13,7 @@ In this blog, we will be optimizing a text book parser from processing ~440M tic
 
 ## Version 0: The Naive, Idiomatic C++ processor
 
-A standard textbook feed handler consists of an order book having a generic Message` that is polymorphic. Hence, we create a base class, derive specific tick types and manage their lifetimes. 
+A standard textbook feed handler consists of an order book having a generic `Message` that is polymorphic. Hence, we create a base class, derive specific tick types and manage their lifetimes. 
 
 ```cpp
 #pragma once
