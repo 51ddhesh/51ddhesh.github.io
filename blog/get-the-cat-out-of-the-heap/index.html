@@ -441,7 +441,7 @@
       <p>In performance critical areas like high-frequency trading arenas, latency is the difference between making or losing capital.</p>
 <p>In this blog, we will be optimizing a text book parser from processing ~440M ticks per second to processing ~25B ticks per second.</p>
 <h2 id="version-0-the-naive-idiomatic-c-processor">Version 0: The Naive, Idiomatic C++ processor</h2>
-<p>A standard textbook feed handler consists of an order book having a generic Message` that is polymorphic. Hence, we create a base class, derive specific tick types and manage their lifetimes.</p>
+<p>A standard textbook feed handler consists of an order book having a generic <code>Message</code> that is polymorphic. Hence, we create a base class, derive specific tick types and manage their lifetimes.</p>
 <pre class="giallo" style="color: #D8DEE9; background-color: #2E3440;"><code data-lang="cpp"><span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">pragma</span><span style="color: #8FBCBB;"> once</span></span>
 <span class="giallo-l"></span>
 <span class="giallo-l"><span style="color: #5E81AC;font-weight: bold;">#</span><span style="color: #81A1C1;">include</span><span style="color: #ECEFF4;"> &lt;</span><span style="color: #A3BE8C;">vector</span><span style="color: #ECEFF4;">&gt;</span></span>
