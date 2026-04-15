@@ -157,7 +157,7 @@ $$&lt;&#x2F;p&gt;
 &lt;span class=&quot;giallo-l&quot;&gt;&lt;span&gt;        book&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;.&lt;&#x2F;span&gt;&lt;span style=&quot;color: #88C0D0;&quot;&gt;handle&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;(&lt;&#x2F;span&gt;&lt;span&gt;data&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;[&lt;&#x2F;span&gt;&lt;span&gt;i&lt;&#x2F;span&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;])&lt;&#x2F;span&gt;&lt;span style=&quot;color: #81A1C1;&quot;&gt;;&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
 &lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;    }&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
 &lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #ECEFF4;&quot;&gt;}&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
-&lt;p&gt;The throughput now jumps to 1.15 Billion per ticks.&lt;&#x2F;p&gt;
+&lt;p&gt;The throughput now jumps to 1.15 billion per ticks.&lt;&#x2F;p&gt;
 &lt;pre class=&quot;giallo&quot; style=&quot;color: #D8DEE9; background-color: #2E3440;&quot;&gt;&lt;code data-lang=&quot;shellscript&quot;&gt;&lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #88C0D0;&quot;&gt;------------------------------------------------------------------&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
 &lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #88C0D0;&quot;&gt;Benchmark&lt;&#x2F;span&gt;&lt;span style=&quot;color: #A3BE8C;&quot;&gt;             Time        CPU   Iterations UserCounters...&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
 &lt;span class=&quot;giallo-l&quot;&gt;&lt;span style=&quot;color: #88C0D0;&quot;&gt;------------------------------------------------------------------&lt;&#x2F;span&gt;&lt;&#x2F;span&gt;
@@ -268,7 +268,10 @@ $$&lt;&#x2F;p&gt;
 &lt;tr&gt;&lt;td style=&quot;text-align: left&quot;&gt;SIMD Processing&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: left&quot;&gt;186998149&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: left&quot;&gt;9390307057&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: left&quot;&gt;26.3322G&#x2F;s&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
 &lt;tr&gt;&lt;td style=&quot;text-align: left&quot;&gt;Metal&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: left&quot;&gt;128716735&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: left&quot;&gt;6947745302&lt;&#x2F;td&gt;&lt;td style=&quot;text-align: left&quot;&gt;25.0692G&#x2F;s&lt;&#x2F;td&gt;&lt;&#x2F;tr&gt;
 &lt;&#x2F;tbody&gt;&lt;&#x2F;table&gt;
-&lt;h2 id=&quot;end&quot;&gt;End&lt;&#x2F;h2&gt;
+&lt;h2 id=&quot;source&quot;&gt;Source&lt;&#x2F;h2&gt;
+&lt;blockquote&gt;
+&lt;p&gt;NOTE: The test was done on a Ryzen 7 7435HS with &lt;code&gt;sudo cpupower frequency-set -g performance&lt;&#x2F;code&gt;&lt;&#x2F;p&gt;
+&lt;&#x2F;blockquote&gt;
 &lt;p&gt;The code files for this implementation are available &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;github.com&#x2F;51ddhesh&#x2F;latency-progression&quot;&gt;here&lt;&#x2F;a&gt; and are free to use under &lt;a rel=&quot;external&quot; href=&quot;https:&#x2F;&#x2F;www.boost.org&#x2F;LICENSE_1_0.txt&quot;&gt;the Boost Software License 1.0&lt;&#x2F;a&gt;.&lt;&#x2F;p&gt;
 </content>
         

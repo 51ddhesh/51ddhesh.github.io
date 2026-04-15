@@ -572,7 +572,7 @@ $$</p>
 <span class="giallo-l"><span>        book</span><span style="color: #ECEFF4;">.</span><span style="color: #88C0D0;">handle</span><span style="color: #ECEFF4;">(</span><span>data</span><span style="color: #ECEFF4;">[</span><span>i</span><span style="color: #ECEFF4;">])</span><span style="color: #81A1C1;">;</span></span>
 <span class="giallo-l"><span style="color: #ECEFF4;">    }</span></span>
 <span class="giallo-l"><span style="color: #ECEFF4;">}</span></span></code></pre>
-<p>The throughput now jumps to 1.15 Billion per ticks.</p>
+<p>The throughput now jumps to 1.15 billion per ticks.</p>
 <pre class="giallo" style="color: #D8DEE9; background-color: #2E3440;"><code data-lang="shellscript"><span class="giallo-l"><span style="color: #88C0D0;">------------------------------------------------------------------</span></span>
 <span class="giallo-l"><span style="color: #88C0D0;">Benchmark</span><span style="color: #A3BE8C;">             Time        CPU   Iterations UserCounters...</span></span>
 <span class="giallo-l"><span style="color: #88C0D0;">------------------------------------------------------------------</span></span>
@@ -683,7 +683,10 @@ $$</p>
 <tr><td style="text-align: left">SIMD Processing</td><td style="text-align: left">186998149</td><td style="text-align: left">9390307057</td><td style="text-align: left">26.3322G/s</td></tr>
 <tr><td style="text-align: left">Metal</td><td style="text-align: left">128716735</td><td style="text-align: left">6947745302</td><td style="text-align: left">25.0692G/s</td></tr>
 </tbody></table>
-<h2 id="end">End</h2>
+<h2 id="source">Source</h2>
+<blockquote>
+<p>NOTE: The test was done on a Ryzen 7 7435HS with <code>sudo cpupower frequency-set -g performance</code></p>
+</blockquote>
 <p>The code files for this implementation are available <a rel="external" href="https://github.com/51ddhesh/latency-progression">here</a> and are free to use under <a rel="external" href="https://www.boost.org/LICENSE_1_0.txt">the Boost Software License 1.0</a>.</p>
 
     </div>
