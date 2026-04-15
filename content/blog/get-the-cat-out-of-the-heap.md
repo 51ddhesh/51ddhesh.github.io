@@ -168,7 +168,7 @@ void process_stream(const std::vector<MarketMessagePod>& stream, FastOrderBook& 
 }
 ```
 
-The throughput now jumps to 1.15 Billion per ticks.
+The throughput now jumps to 1.15 billion per ticks.
 
 ```bash
 ------------------------------------------------------------------
@@ -311,6 +311,8 @@ But in low latency arenas, peak throughput is a vanity metric; jitter is the onl
 |Metal   |128716735     |6947745302        |25.0692G/s  |
 
 
-## End
+## Source
 
+> NOTE: The test was done on a Ryzen 7 7435HS with `sudo cpupower frequency-set -g performance`
+ 
 The code files for this implementation are available [here](https://github.com/51ddhesh/latency-progression) and are free to use under [the Boost Software License 1.0](https://www.boost.org/LICENSE_1_0.txt).
