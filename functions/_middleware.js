@@ -14,8 +14,8 @@ const ASCII_CARD = `
 
   ${BL}interests:${R} hft systems · low-latency c++ · quant dev
 
-  ${BL}github  →${R}  github.com/51ddhesh
-  ${BL}blog    →${R}  51ddhesh.pages.dev/blog
+  ${BL}github  →${R}  https://github.com/51ddhesh
+  ${BL}blog    →${R}  https://51ddhesh.pages.dev/blog
   ${HR}
 `;
 
