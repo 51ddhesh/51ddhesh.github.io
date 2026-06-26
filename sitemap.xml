@@ -7,6 +7,10 @@
         <loc>https://51ddhesh.github.io/blog/</loc>
     </url>
     <url>
+        <loc>https://51ddhesh.github.io/blog/are-you-not-entertained/</loc>
+        <lastmod>2026-06-22</lastmod>
+    </url>
+    <url>
         <loc>https://51ddhesh.github.io/blog/get-the-cat-out-of-the-heap/</loc>
         <lastmod>2026-04-15</lastmod>
     </url>
@@ -20,7 +24,13 @@
         <loc>https://51ddhesh.github.io/tags/high-performance/</loc>
     </url>
     <url>
+        <loc>https://51ddhesh.github.io/tags/infrastructure-engineering/</loc>
+    </url>
+    <url>
         <loc>https://51ddhesh.github.io/tags/low-latency/</loc>
+    </url>
+    <url>
+        <loc>https://51ddhesh.github.io/tags/memory-management/</loc>
     </url>
     <url>
         <loc>https://51ddhesh.github.io/tags/simd/</loc>
